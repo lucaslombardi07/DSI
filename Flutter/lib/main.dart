@@ -14,6 +14,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (context) => MyAppState(),
       child: MaterialApp(
+        debugShowCheckedModeBanner: false,
         title: 'Namer App',
         theme: ThemeData(
           useMaterial3: true,
@@ -24,11 +25,15 @@ class MyApp extends StatelessWidget {
     );
   }
 }
-
+enum ViewMode {
+  grid, list
+}
 class MyAppState extends ChangeNotifier {
   var current = WordPair.random();
   var history = <WordPair>[];
   GlobalKey? historyListKey;
+
+  ViewMode _viewMode = ViewMode.list;
 
   void getNext() {
     history.insert(0, current);
@@ -39,6 +44,21 @@ class MyAppState extends ChangeNotifier {
   }
 
   var favorites = <WordPair>[];
+
+  int _columns = 1;
+  double _ratio = 10;
+
+  void toggleViewMode(){
+    if (_viewMode == ViewMode.grid){
+      _columns = 1;
+      _ratio = 10;
+      _viewMode = ViewMode.list;
+    } else {
+      _columns = 2;
+      _ratio = 5;
+      _viewMode = ViewMode.grid;
+    }
+  }
 
   var removeList = <WordPair>[];
   void desFavorite(WordPair fav) {
@@ -202,8 +222,15 @@ class GeneratorPage extends StatelessWidget {
   }
 }
 
-class FavoritesPage extends StatelessWidget {
+
+
+class FavoritesPage extends StatefulWidget {
   @override
+  State<FavoritesPage> createState() => _FavoritesPageState();
+
+}
+
+class _FavoritesPageState extends State<FavoritesPage> {
   Widget build(BuildContext context) {
     var appState = context.watch<MyAppState>();
 
@@ -213,29 +240,47 @@ class FavoritesPage extends StatelessWidget {
       );
     }
 
-    return ListView(
-      children: [
-        for (var favorito in appState.favorites)
-          Padding(
-            padding: const EdgeInsets.all(2.0),
-            child: ElevatedButton(onPressed: () {appState.desFavorite(favorito);},
-              child:
-              Row(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Icon(appState.getIcon(favorito)),
-                  ),
-                  Text(favorito.asPascalCase),
-                ],
+    return Scaffold(
+      appBar: AppBar( centerTitle: true,
+        title: const Text("Favoritos"),actions: [IconButton(icon: Icon(appState._viewMode == ViewMode.list ? Icons.grid_on : Icons.view_list),
+          onPressed: () {
+            appState.toggleViewMode();
+            appState.notifyListeners();
+          },
+        ),
+      ],
+    ),
+    body: Container(
+      child:
+        GridView.count(
+          crossAxisCount: appState._columns,
+          childAspectRatio: appState._ratio,
+          crossAxisSpacing: 8,
+          mainAxisSpacing: 8,
+        children: [
+          for (var favorito in appState.favorites)
+            Padding(
+              padding: const EdgeInsets.all(2.0),
+              child: ElevatedButton(onPressed: () {appState.desFavorite(favorito);},
+                child:
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Icon(appState.getIcon(favorito)),
+                    ),
+                    Text(favorito.asPascalCase),
+                  ],
+                ),
               ),
             ),
-          ),
-      ],
+        ],
+      ),
+    ),
     );
+    }
   }
-}
 
 class ApplyButton extends StatelessWidget {
   const ApplyButton();
@@ -343,3 +388,4 @@ class _HistoryListViewState extends State<HistoryListView> {
     );
   }
 }
+
