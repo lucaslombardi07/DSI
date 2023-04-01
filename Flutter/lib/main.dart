@@ -29,12 +29,25 @@ enum ViewMode {
   grid, list
 }
 class MyAppState extends ChangeNotifier {
+  //Atributos
   var current = WordPair.random();
   var history = <WordPair>[];
   GlobalKey? historyListKey;
-
   ViewMode _viewMode = ViewMode.list;
+  var favorites = <WordPair>[];
+  int _columns = 1;
+  double _ratio = 10;
+  var removeList = <WordPair>[];
+  bool changeIsMade = false;
 
+  //Getters
+  IconData getIcon(WordPair fav){
+    if (removeList.contains(fav)){
+      return Icons.delete;
+    }else {
+      return Icons.favorite;
+    }
+  }
   void getNext() {
     history.insert(0, current);
     var animatedList = historyListKey?.currentState as AnimatedListState?;
@@ -43,11 +56,8 @@ class MyAppState extends ChangeNotifier {
     notifyListeners();
   }
 
-  var favorites = <WordPair>[];
 
-  int _columns = 1;
-  double _ratio = 10;
-
+  //Metodos
   void toggleViewMode(){
     if (_viewMode == ViewMode.grid){
       _columns = 1;
@@ -59,8 +69,6 @@ class MyAppState extends ChangeNotifier {
       _viewMode = ViewMode.grid;
     }
   }
-
-  var removeList = <WordPair>[];
   void desFavorite(WordPair fav) {
     changeIsMade = true;
     if (removeList.contains(fav)) {
@@ -70,17 +78,6 @@ class MyAppState extends ChangeNotifier {
     }
     notifyListeners();
   }
-
-  IconData getIcon(WordPair fav){
-    if (removeList.contains(fav)){
-      return Icons.delete;
-    }else {
-      return Icons.favorite;
-    }
-  }
-
-  bool changeIsMade = false;
-
   Widget applyButton(){
     if (changeIsMade){
       return ElevatedButton(onPressed: () {deleteFromList();}, child: Icon(Icons.check));
@@ -88,7 +85,6 @@ class MyAppState extends ChangeNotifier {
       return SizedBox();
     }
   }
-
   void deleteFromList(){
     for (var item in removeList)
       if (favorites.contains(item)){
@@ -98,7 +94,6 @@ class MyAppState extends ChangeNotifier {
     removeList.clear();
     notifyListeners();
   }
-
   void toggleFavorite([WordPair? pair]) {
     pair = pair ?? current;
     if (favorites.contains(pair)) {
@@ -199,14 +194,37 @@ class GeneratorPage extends StatelessWidget {
           Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              ElevatedButton.icon(
-                onPressed: () {
-                  appState.toggleFavorite();
-                },
-                icon: Icon(icon),
-                label: Text('Like'),
+
+              Card(
+                  shape: StadiumBorder(
+                  ),
+                  child:
+                  SizedBox(
+                    height: 35,
+                    child: Center(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          IconButton(
+                            iconSize: 20,
+                            alignment: Alignment.topCenter,
+                            icon: Icon(icon, color: Theme.of(context).colorScheme.primary,),
+                            onPressed: () {
+                              appState.toggleFavorite();
+                            },
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(0, 0, 15, 0),
+                            child: Text('Like', style: TextStyle(color: Theme.of(context).colorScheme.primary,),),
+                          ),
+
+                        ],
+                      ),
+                    ),
+                  )
               ),
-              SizedBox(width: 10),
+
               ElevatedButton(
                 onPressed: () {
                   appState.getNext();
